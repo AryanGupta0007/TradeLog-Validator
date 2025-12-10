@@ -1,5 +1,5 @@
 import polars as pl
-from result import CheckResult
+from .result import CheckResult
 import numpy as np
 
 def pnl_distribution(df: pl.DataFrame) -> CheckResult:
