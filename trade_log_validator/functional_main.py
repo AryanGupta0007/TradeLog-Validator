@@ -21,6 +21,9 @@ from .universal_checks import (
 from .universal_info_checks import (
     concurrent_positions,
 )
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 
 
 
@@ -364,5 +367,3 @@ def main(algo_name, trade_log, options_file, lot_size, segment="UNIVERSAL"):
         logger.close()
         sys.stdout = sys.__stdout__
         print("[OK] Validation complete. Log saved to: " + logger.log_file)
-
-# main("my_algo", "trade_log.csv", "sample_options.csv", 75, "options")
