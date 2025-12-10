@@ -5,7 +5,7 @@ from io import StringIO
 from datetime import datetime
 import time
 import os
-from universal_checks import (
+from .universal_checks import (
     no_nulls_check,
     non_zero_check,
     no_fractional_check,
@@ -18,7 +18,7 @@ from universal_checks import (
     options_quantity_check,
     duplicate_rows_check
 )
-from universal_info_checks import (
+from .universal_info_checks import (
     concurrent_positions,
 )
 
@@ -365,4 +365,4 @@ def main(algo_name, trade_log, options_file, lot_size, segment="UNIVERSAL"):
         sys.stdout = sys.__stdout__
         print("[OK] Validation complete. Log saved to: " + logger.log_file)
 
-main("my_algo", "trade_log.csv", "sample_options.csv", 75, "options")
+# main("my_algo", "trade_log.csv", "sample_options.csv", 75, "options")
