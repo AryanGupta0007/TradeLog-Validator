@@ -348,10 +348,10 @@ def generate_violations_from_checks(results, df_original: pl.DataFrame, algo_nam
         traceback.print_exc()
         return None
 
-def main(algo_name, trade_log, options_file, lot_size, segment="UNIVERSAL"):
+def main(algo_name, trade_log_path, options_file_path, lot_size, segment="UNIVERSAL"):
     ALGO_NAME = algo_name
-    TRADE_LOG = trade_log
-    OPTION_FILE = options_file
+    TRADE_LOG = trade_log_path
+    OPTION_FILE = options_file_path
     SEGMENT = segment.upper()
     LOT_SIZE = lot_size
     logger = Logger(algo_name=ALGO_NAME, log_dir="logs")
