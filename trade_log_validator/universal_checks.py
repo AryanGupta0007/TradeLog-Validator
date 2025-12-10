@@ -1,7 +1,7 @@
 import polars as pl
 import pandas as pd
-# from .result import CheckResult
-from result import CheckResult
+from .result import CheckResult
+# from result import CheckResult
 
 
 def no_nulls_check(df: pl.DataFrame) -> CheckResult:

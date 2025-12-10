@@ -5,24 +5,7 @@ from io import StringIO
 from datetime import datetime
 import time
 import os
-# from .universal_checks import (
-#     no_nulls_check,
-#     non_zero_check,
-#     no_fractional_check,
-#     exit_after_entry_check,
-#     market_hours_check,
-#     pnl_check,
-#     entry_exit_price_chain_check,
-#     no_negatives_check,
-#     options_expiry_check,
-#     options_quantity_check,
-#     duplicate_rows_check
-# )
-# from .universal_info_checks import (
-#     concurrent_positions,
-# )
-
-from universal_checks import (
+from .universal_checks import (
     no_nulls_check,
     non_zero_check,
     no_fractional_check,
@@ -35,9 +18,26 @@ from universal_checks import (
     options_quantity_check,
     duplicate_rows_check
 )
-from universal_info_checks import (
+from .universal_info_checks import (
     concurrent_positions,
 )
+
+# from universal_checks import (
+#     no_nulls_check,
+#     non_zero_check,
+#     no_fractional_check,
+#     exit_after_entry_check,
+#     market_hours_check,
+#     pnl_check,
+#     entry_exit_price_chain_check,
+#     no_negatives_check,
+#     options_expiry_check,
+#     options_quantity_check,
+#     duplicate_rows_check
+# )
+# from universal_info_checks import (
+#     concurrent_positions,
+# )
 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
