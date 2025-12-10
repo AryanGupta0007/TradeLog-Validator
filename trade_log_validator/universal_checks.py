@@ -1,6 +1,7 @@
 import polars as pl
 import pandas as pd
-from .result import CheckResult
+# from .result import CheckResult
+from result import CheckResult
 
 
 def no_nulls_check(df: pl.DataFrame) -> CheckResult:
@@ -291,22 +292,44 @@ def options_expiry_check(df: pl.DataFrame)->CheckResult:
             "Exit After expiry"
             )
 
-def options_quantity_check(df: pl.DataFrame, lot_size)->CheckResult:
-    result_name = "QTY"
-    issues = {
-        result_name: [
-            ('idx', 'Key', 'ExitTime', 'Symbol', 'EntryPrice', 'ExitPrice',
-            'Quantity', 'PositionStatus', 'Pnl', 'ExitType', 'KeyEpoch', 'ExitEpoch')
-        ]
-    }
-    LOT_SIZE = 75
-    rows = df.filter((pl.col('Quantity') % lot_size) != 0).rows()
-    for row in rows:
-        issues[result_name].append(row)
+import re
+
+def extract_symbol(sym):
+    pattern = r"(.+?)(?=\d{1,2}[A-Z]{3}\d{2})"
+    match = re.match(pattern, sym)
+    return match.group(1) if match else None
+
+def options_quantity_check(df: pl.DataFrame, lot_size_df)->CheckResult:
+    result_name = ["QTY", "SYMBOL"]
+    issues = {}
+    for res in result_name:
+        issues[res] = [
+                ('idx', 'Key', 'ExitTime', 'Symbol', 'EntryPrice', 'ExitPrice',
+                'Quantity', 'PositionStatus', 'Pnl', 'ExitType', 'KeyEpoch', 'ExitEpoch')
+            ]
+
+    pdf = df.to_pandas()
+    for idx, row in pdf.iterrows():
+        try:
+            sym = extract_symbol(row["Symbol"])
+        except Exception as e:
+            print(e)
+            print(f"ERROR RETRIEVING SYMBOL {idx}, {sym}")
+        # print(sym)
+        else:
+            size = lot_size_df.filter(pl.col('Symbol') == sym)["LotSize"]
+            if len(size) > 0:
+                size = size[0]
+                if size != row["Quantity"]:
+                    issues["QTY"].append(row)    
+            else:
+                issues["SYMBOL"].append(row)
+                
     has_issues = any(len(v)  > 1 for k, v in issues.items())
     if has_issues:
         severity = {
-            "QTY": "ERROR"
+            "QTY": "ERROR",
+            "SYMBOL": "ERROR"
         }
         return CheckResult("option_quantity_check", "OPTIONS", "FAIL", "Wrong Quantity detected", issues, severity)
     return CheckResult("option_quantity_check", "OPTIONS", "PASS", "No Wrong Quantity detected")

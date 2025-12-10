@@ -5,7 +5,24 @@ from io import StringIO
 from datetime import datetime
 import time
 import os
-from .universal_checks import (
+# from .universal_checks import (
+#     no_nulls_check,
+#     non_zero_check,
+#     no_fractional_check,
+#     exit_after_entry_check,
+#     market_hours_check,
+#     pnl_check,
+#     entry_exit_price_chain_check,
+#     no_negatives_check,
+#     options_expiry_check,
+#     options_quantity_check,
+#     duplicate_rows_check
+# )
+# from .universal_info_checks import (
+#     concurrent_positions,
+# )
+
+from universal_checks import (
     no_nulls_check,
     non_zero_check,
     no_fractional_check,
@@ -18,9 +35,10 @@ from .universal_checks import (
     options_quantity_check,
     duplicate_rows_check
 )
-from .universal_info_checks import (
+from universal_info_checks import (
     concurrent_positions,
 )
+
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -64,15 +82,17 @@ def load_df(path: str) -> pl.DataFrame:
     return pl.read_csv(path)
 
 
-def build_and_run(trade_log: str, chain_file: str, segment: str, lot_size) -> Tuple[list, Dict[str, Any], Dict[str, Any], pl.DataFrame]:
+def build_and_run(trade_log: str, chain_file: str, segment: str, lot_size_file) -> Tuple[list, Dict[str, Any], Dict[str, Any], pl.DataFrame]:
     df = load_df(trade_log)
-
+    lot_size_df = load_df(lot_size_file)
+    # print(lot_size_df)
     # mimic main.py preprocessing
     df = df.with_row_index("idx")
     df = df.with_columns(
         pl.col("Key").alias("KeyEpoch"),
         pl.col("ExitTime").alias("ExitEpoch"),
     )
+    
     
     try:
         df = df.with_columns(
@@ -149,7 +169,7 @@ def build_and_run(trade_log: str, chain_file: str, segment: str, lot_size) -> Tu
         results.append(entry_exit_price_chain_check(df, chain_df))
     if segment == "OPTIONS":
         results.append(options_expiry_check(df))
-        results.append(options_quantity_check(df, lot_size))
+        results.append(options_quantity_check(df, lot_size_df))
         
     infos: Dict[str, Any] = {}
     # for fn in (pnl_distribution, trade_duration, concurrent_positions):
@@ -348,17 +368,17 @@ def generate_violations_from_checks(results, df_original: pl.DataFrame, algo_nam
         traceback.print_exc()
         return None
 
-def main(algo_name, trade_log_path, options_file_path, lot_size, segment="UNIVERSAL"):
+def main(algo_name, trade_log_path, options_file_path, lot_size_file_path="lot_size.csv", segment="UNIVERSAL"):
     ALGO_NAME = algo_name
     TRADE_LOG = trade_log_path
     OPTION_FILE = options_file_path
     SEGMENT = segment.upper()
-    LOT_SIZE = lot_size
+    LOT_SIZE_FILE = lot_size_file_path
     logger = Logger(algo_name=ALGO_NAME, log_dir="logs")
     sys.stdout = logger
     
     try:
-        results, violations, infos, df = build_and_run(trade_log=TRADE_LOG, chain_file=OPTION_FILE, segment=SEGMENT, lot_size=LOT_SIZE)
+        results, violations, infos, df = build_and_run(trade_log=TRADE_LOG, chain_file=OPTION_FILE, segment=SEGMENT, lot_size_file=lot_size_file_path)
         print_summary(results, violations, infos, skip_infos=False)
         print("\n" + "="*80)
         generate_violations_from_checks(results, df, algo_name=ALGO_NAME)
@@ -367,3 +387,7 @@ def main(algo_name, trade_log_path, options_file_path, lot_size, segment="UNIVER
         logger.close()
         sys.stdout = sys.__stdout__
         print("[OK] Validation complete. Log saved to: " + logger.log_file)
+        
+if __name__ == "__main__":
+    main(algo_name="ALGO", trade_log_path="correct_log.csv", options_file_path="sample_options.csv", lot_size_file_path="lot_size.csv", segment="OPTIONS")
+    
