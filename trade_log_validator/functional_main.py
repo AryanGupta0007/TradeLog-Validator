@@ -144,7 +144,7 @@ def build_and_run(trade_log: str, chain_file: str, segment: str, lot_size) -> Tu
     results.append(duplicate_rows_check(df))
     if chain_df is not None:
         results.append(entry_exit_price_chain_check(df, chain_df))
-    if segment == "options":
+    if segment == "OPTIONS":
         results.append(options_expiry_check(df))
         results.append(options_quantity_check(df, lot_size))
         
@@ -345,14 +345,12 @@ def generate_violations_from_checks(results, df_original: pl.DataFrame, algo_nam
         traceback.print_exc()
         return None
 
-
-if __name__ == "__main__":
-    # Set up logging
-    ALGO_NAME = "my_algo"
-    TRADE_LOG = "trade_log.csv"
-    OPTION_FILE = "sample_options.csv"
-    SEGMENT = "options"
-    LOT_SIZE = 75
+def main(algo_name, trade_log, options_file, lot_size, segment="UNIVERSAL"):
+    ALGO_NAME = algo_name
+    TRADE_LOG = trade_log
+    OPTION_FILE = options_file
+    SEGMENT = segment.upper()
+    LOT_SIZE = lot_size
     logger = Logger(algo_name=ALGO_NAME, log_dir="logs")
     sys.stdout = logger
     
@@ -366,3 +364,5 @@ if __name__ == "__main__":
         logger.close()
         sys.stdout = sys.__stdout__
         print("[OK] Validation complete. Log saved to: " + logger.log_file)
+
+main("my_algo", "trade_log.csv", "sample_options.csv", 75, "options")
