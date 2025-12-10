@@ -9,6 +9,7 @@ class _ValidatorModule:
         if (segment.upper() == "OPTIONS") or (segment.upper() == "OPTION") :
             segment = "OPTIONS"
             if lot_size == None:
+                lot_size = 75
                 print("[WARNING] Contract Lot size not defined using default value 75.")
             
         return main(algo_name, trade_log_path, options_file_path, lot_size, segment)
