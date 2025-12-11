@@ -12,13 +12,18 @@ authors = [
   {name = "Aryan Gupta", email = "aryangupta07075@gmail.com"}
 ]
 dependencies = [
-  "polars>=0.18.0"
+  "DataFeederM @ git+https://github.com/AryanGupta0007/DataFeedModule@1e4906d2d9a3ab3d7f0158d858a87d080440fba1",
+  "polars>=0.18.0",
+  "pandas>=2.0",
+  "numpy>=1.23"
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest>=7.0",
   "black",
+  "isort",
+  "flake8",
 ]
 
 [tool.setuptools.packages.find]

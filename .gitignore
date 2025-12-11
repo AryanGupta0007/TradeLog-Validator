@@ -142,6 +142,7 @@ Thumbs.db
 docs/
 scripts/
 logs/
+myenv/
 # tests/
 # *.xlsx
 # *.xls
