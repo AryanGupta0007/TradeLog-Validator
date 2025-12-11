@@ -1,48 +1,46 @@
 from typing import Tuple, Dict, Any
 import polars as pl
 import sys
-from io import StringIO
 from datetime import datetime
-import time
 import os
-from .universal_checks import (
-    no_nulls_check,
-    non_zero_check,
-    no_fractional_check,
-    exit_after_entry_check,
-    market_hours_check,
-    pnl_check,
-    entry_exit_price_chain_check,
-    no_negatives_check,
-    options_expiry_check,
-    options_quantity_check,
-    duplicate_rows_check
-)
-from .universal_info_checks import (
-    concurrent_positions,
-)
-
-# from universal_checks import (
-#     no_nulls_check,
-#     non_zero_check,
-#     no_fractional_check,
-#     exit_after_entry_check,
-#     market_hours_check,
-#     pnl_check,
-#     entry_exit_price_chain_check,
-#     no_negatives_check,
-#     options_expiry_check,
-#     options_quantity_check,
-#     duplicate_rows_check
-# )
-# from universal_info_checks import (
-#     concurrent_positions,
-# )
+prod = True
+if prod:
+    from .universal_checks import (
+        no_nulls_check,
+        non_zero_check,
+        no_fractional_check,
+        exit_after_entry_check,
+        market_hours_check,
+        pnl_check,
+        entry_exit_price_chain_check,
+        no_negatives_check,
+        options_expiry_check,
+        options_quantity_check,
+        duplicate_rows_check
+    )
+    from .universal_info_checks import (
+        concurrent_positions,
+    )
+else:
+    from universal_checks import (
+        no_nulls_check,
+        non_zero_check,
+        no_fractional_check,
+        exit_after_entry_check,
+        market_hours_check,
+        pnl_check,
+        entry_exit_price_chain_check,
+        no_negatives_check,
+        options_expiry_check,
+        options_quantity_check,
+        duplicate_rows_check
+    )
+    from universal_info_checks import (
+        concurrent_positions,
+    )
 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
-from dotenv import load_dotenv
-load_dotenv()
 
 
 class Logger:
@@ -82,7 +80,7 @@ def load_df(path: str) -> pl.DataFrame:
     return pl.read_csv(path)
 
 
-def build_and_run(trade_log: str, segment: str, lot_size_file, mongo_uri) -> Tuple[list, Dict[str, Any], Dict[str, Any], pl.DataFrame]:
+def build_and_run(trade_log: str, segment: str, lot_size_file, mongo_client) -> Tuple[list, Dict[str, Any], Dict[str, Any], pl.DataFrame]:
     df = load_df(trade_log)
     lot_size_df = load_df(lot_size_file)
     # print(lot_size_df)
@@ -157,7 +155,7 @@ def build_and_run(trade_log: str, segment: str, lot_size_file, mongo_uri) -> Tup
     results.append(pnl_check(df))
     results.append(no_negatives_check(df))
     results.append(duplicate_rows_check(df))
-    results.append(entry_exit_price_chain_check(df, mongo_uri=mongo_uri))
+    results.append(entry_exit_price_chain_check(df, mongo_client=mongo_client))
     if segment == "OPTIONS":
         results.append(options_expiry_check(df))
         results.append(options_quantity_check(df, lot_size_df))
@@ -359,7 +357,7 @@ def generate_violations_from_checks(results, df_original: pl.DataFrame, algo_nam
         traceback.print_exc()
         return None
 
-def main(algo_name, trade_log_path, lot_size_file_path="lot_size.csv", segment="UNIVERSAL", mongo_uri=None, output_path="logs"):
+def main(algo_name, trade_log_path, lot_size_file_path="lot_size.csv", segment="UNIVERSAL", mongo_client=None, output_path="logs"):
     ALGO_NAME = algo_name
     TRADE_LOG = trade_log_path
     SEGMENT = segment.upper()
@@ -368,7 +366,7 @@ def main(algo_name, trade_log_path, lot_size_file_path="lot_size.csv", segment="
     sys.stdout = logger
     
     try:
-        results, violations, infos, df = build_and_run(trade_log=TRADE_LOG, segment=SEGMENT, lot_size_file=LOT_SIZE_FILE, mongo_uri=mongo_uri)
+        results, violations, infos, df = build_and_run(trade_log=TRADE_LOG, segment=SEGMENT, lot_size_file=LOT_SIZE_FILE, mongo_client=mongo_client)
         print_summary(results, violations, infos, skip_infos=False)
         print("\n" + "="*80)
         generate_violations_from_checks(results, df, algo_name=ALGO_NAME, output_dir=output_path)
@@ -379,8 +377,12 @@ def main(algo_name, trade_log_path, lot_size_file_path="lot_size.csv", segment="
         print("[OK] Validation complete. Log saved to: " + logger.log_file)
         
 if __name__ == "__main__":
-    import dotenv
     import os
+    from dotenv import load_dotenv
+    from pymongo import MongoClient
+    load_dotenv()
+
     mongo_uri = os.getenv('MONGO_URI')
-    main(algo_name="ALGO", trade_log_path="sample_trade_log_2024_updated.csv", lot_size_file_path="lot_size.csv", segment="OPTIONS", mongo_uri=mongo_uri, output_path=r"C:\Users\aryan\OneDrive\Desktop\WORK__\validator_final\trade_log_validator\millionaire")
+    client = MongoClient(mongo_uri)
+    main(algo_name="ALGO", trade_log_path="sample_trade_log_2024_updated.csv", lot_size_file_path="lot_size.csv", mongo_client=client, output_path=r"C:\Users\aryan\OneDrive\Desktop\WORK__\validator_final\trade_log_validator\millionaire")
     

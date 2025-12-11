@@ -1,7 +1,10 @@
 import polars as pl
 import pandas as pd
-from .result import CheckResult
-# from result import CheckResult
+prod = True
+if prod:
+    from .result import CheckResult
+else:
+    from result import CheckResult
 import DataFeederM
 
 def no_nulls_check(df: pl.DataFrame) -> CheckResult:
@@ -190,10 +193,10 @@ def pnl_check(df: pl.DataFrame) -> CheckResult:
     return CheckResult("Pnl Validation", "UNIVERSAL", "PASS", "PnL validation passed")
 
 
-def entry_exit_price_chain_check(df: pl.DataFrame, mongo_uri) -> CheckResult:
+def entry_exit_price_chain_check(df: pl.DataFrame, mongo_client) -> CheckResult:
 
-    def _get_price(t, sym, mongo_uri):
-        output = DataFeederM(mongo_uri=mongo_uri,
+    def _get_price(t, sym, mongo_client):
+        output = DataFeederM(mongo_client=mongo_client,
             syms=[sym],
             epochs=[t])
         return output[sym][0]['c']
@@ -227,8 +230,8 @@ def entry_exit_price_chain_check(df: pl.DataFrame, mongo_uri) -> CheckResult:
         
             
             
-        entry = _get_price(t=entry_time, sym=sym, mongo_uri=mongo_uri)
-        exitp = _get_price(t=exit_time, sym=sym, mongo_uri=mongo_uri)
+        entry = _get_price(t=entry_time, sym=sym, mongo_client=mongo_client)
+        exitp = _get_price(t=exit_time, sym=sym, mongo_client=mongo_client)
         entry_price = float(row['EntryPrice'])
         exit_price = float(row['ExitPrice'])
         if entry is None or (float(entry) != entry_price) or (exitp is None or float(exitp) != exit_price):
