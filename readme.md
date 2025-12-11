@@ -1,3 +1,55 @@
+# TradeLog Validator – Starter Guide
+
+## Installation
+
+```bash
+pip install git+https://github.com/AryanGupta0007/TradeLog-Validator.git
+```
+
+## Basic Usage
+
+```python
+import trade_log_validator
+from pymongo import MongoClient
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+mongo_uri = os.getenv("MONGO_URI")
+client = MongoClient(mongo_uri)
+
+trade_log_validator(
+    mongo_client=client,
+    algo_name="hello",
+    trade_log_path="sample_trade_log_2024_updated.csv",
+    lot_size_file_path="lot_size.csv",
+    segment="UNIVERSAL",
+    output_path="je"
+)
+```
+
+## Function Arguments
+
+### `trade_log_validator(mongo_client=None, algo_name="", trade_log_path="", lot_size_file_path="", segment="UNIVERSAL", output_path="logs")`
+
+| Argument | Type | Required | Description |
+|---------|------|----------|-------------|
+| mongo_client | MongoClient or None | Optional | Provides access to MongoDB for option chain / LTP validation. |
+| algo_name | str | Yes | Strategy name; used in logs and report file names. |
+| trade_log_path | str | Yes | Path to trade log CSV. |
+| lot_size_file_path | str | Yes | Path to lot size CSV. |
+| segment | str | Optional | Default: UNIVERSAL. Logical category for checks. |
+| output_path | str | Optional | Where logs and violation reports will be saved. |
+
+## Description
+
+This validator processes a trade log, runs structural & business-rule checks, and outputs:
+
+- A violations CSV report  
+- A console + log summary  
+- Structured classification of ERRORs and WARNINGs  
+- Info-style metrics (PnL distribution, durations, concurrency)
+
 # Low-Level Design — Validator Module
 
 - **Repository:** Top-level project at `validator_final`
