@@ -2,7 +2,7 @@ import polars as pl
 import pandas as pd
 from .result import CheckResult
 # from result import CheckResult
-
+import DataFeederM
 
 def no_nulls_check(df: pl.DataFrame) -> CheckResult:
     issues = {}
@@ -190,31 +190,17 @@ def pnl_check(df: pl.DataFrame) -> CheckResult:
     return CheckResult("Pnl Validation", "UNIVERSAL", "PASS", "PnL validation passed")
 
 
-def entry_exit_price_chain_check(df: pl.DataFrame, chain_df: pl.DataFrame) -> CheckResult:
-    # chain_df expected to be polars; convert to pandas frame and index by ti,sym with column 'c'
-    try:
-        cdf = chain_df.to_pandas()
-        chain = cdf.set_index(["ti", "sym"]).sort_index()
-    except Exception:
-        chain = None
+def entry_exit_price_chain_check(df: pl.DataFrame, mongo_uri) -> CheckResult:
 
-    def _get_price(t, sym):
-        try:
-            row = chain.loc[(t, sym)]
-            return row.iloc[-1]["c"]
-        except Exception:
-            return None
-
+    def _get_price(t, sym, mongo_uri):
+        output = DataFeederM(mongo_uri=mongo_uri,
+            syms=[sym],
+            epochs=[t])
+        return output[sym][0]['c']
     pdf = df.to_pandas()
     result_name = "LTP"
     issues = {}
     issues[result_name] = [('idx', 'Key', 'ExitTime', 'Symbol', 'EntryPrice', 'ExitPrice', 'Quantity', 'PositionStatus', 'Pnl', 'ExitType', 'KeyEpoch', 'ExitEpoch')]
-    # issues = {
-    #     "Entry Price Not Found": [('idx', 'Key', 'ExitTime', 'Symbol', 'EntryPrice', 'ExitPrice', 'Quantity', 'PositionStatus', 'Pnl', 'ExitType', 'KeyEpoch', 'ExitEpoch')],
-    #     "Exit Price Not Found": [('idx', 'Key', 'ExitTime', 'Symbol', 'EntryPrice', 'ExitPrice', 'Quantity', 'PositionStatus', 'Pnl', 'ExitType', 'KeyEpoch', 'ExitEpoch')],
-    #     "Entry Price Mismatch": [("idx", "EntryTime", "EntryPrice", "ExpectedPrice", "Symbol", "ti", "EntryTimeEpoch")],
-    #     "Exit Price Mismatch": [("idx", "ExitTime", "ExitPrice", "ExpectedPrice", "Symbol", "ti", "ExitTimeEpoch")]
-    # }
 
     for idx, row in pdf.iterrows():
         # Handle NaN values in KeyEpoch and ExitEpoch
@@ -237,11 +223,20 @@ def entry_exit_price_chain_check(df: pl.DataFrame, chain_df: pl.DataFrame) -> Ch
         # print(entry_time, row['Symbol'], exit_time)
         # import sys    
         # sys.exit()
+        sym = row["Symbol"]
         
-        entry = _get_price(entry_time, row["Symbol"]) if chain is not None else None
-        exitp = _get_price(exit_time, row["Symbol"]) if chain is not None else None
-
-        if entry is None or float(entry) != float(row['EntryPrice']) or exitp is None or float(exitp) != float(row['ExitPrice']):
+            
+            
+        entry = _get_price(t=entry_time, sym=sym, mongo_uri=mongo_uri)
+        exitp = _get_price(t=exit_time, sym=sym, mongo_uri=mongo_uri)
+        entry_price = float(row['EntryPrice'])
+        exit_price = float(row['ExitPrice'])
+        if entry is None or (float(entry) != entry_price) or (exitp is None or float(exitp) != exit_price):
+            print("h", sym)
+            
+            print(entry, exitp, entry_price, exit_price)
+            print(row['Key'], entry_time, int((key_epoch / 1e6)))
+            print(row['ExitTime'], exit_time, int((exit_epoch / 1e6)))
             issues[result_name].append(row)
         
         

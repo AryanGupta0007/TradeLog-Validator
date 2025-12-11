@@ -41,8 +41,8 @@ from .universal_info_checks import (
 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
-
-
+from dotenv import load_dotenv
+load_dotenv()
 
 
 class Logger:
@@ -82,7 +82,7 @@ def load_df(path: str) -> pl.DataFrame:
     return pl.read_csv(path)
 
 
-def build_and_run(trade_log: str, chain_file: str, segment: str, lot_size_file) -> Tuple[list, Dict[str, Any], Dict[str, Any], pl.DataFrame]:
+def build_and_run(trade_log: str, segment: str, lot_size_file, mongo_uri) -> Tuple[list, Dict[str, Any], Dict[str, Any], pl.DataFrame]:
     df = load_df(trade_log)
     lot_size_df = load_df(lot_size_file)
     # print(lot_size_df)
@@ -147,14 +147,6 @@ def build_and_run(trade_log: str, chain_file: str, segment: str, lot_size_file) 
             .alias("ExitEpoch")
     ])
 
-
-    chain_df = None
-    if chain_file:
-        try:
-            chain_df = load_df(chain_file)
-        except Exception:
-            chain_df = None
-
     results = []
 
     results.append(no_nulls_check(df))
@@ -165,8 +157,7 @@ def build_and_run(trade_log: str, chain_file: str, segment: str, lot_size_file) 
     results.append(pnl_check(df))
     results.append(no_negatives_check(df))
     results.append(duplicate_rows_check(df))
-    if chain_df is not None:
-        results.append(entry_exit_price_chain_check(df, chain_df))
+    results.append(entry_exit_price_chain_check(df, mongo_uri=mongo_uri))
     if segment == "OPTIONS":
         results.append(options_expiry_check(df))
         results.append(options_quantity_check(df, lot_size_df))
@@ -368,20 +359,19 @@ def generate_violations_from_checks(results, df_original: pl.DataFrame, algo_nam
         traceback.print_exc()
         return None
 
-def main(algo_name, trade_log_path, options_file_path, lot_size_file_path="lot_size.csv", segment="UNIVERSAL"):
+def main(algo_name, trade_log_path, lot_size_file_path="lot_size.csv", segment="UNIVERSAL", mongo_uri=None, output_path="logs"):
     ALGO_NAME = algo_name
     TRADE_LOG = trade_log_path
-    OPTION_FILE = options_file_path
     SEGMENT = segment.upper()
     LOT_SIZE_FILE = lot_size_file_path
-    logger = Logger(algo_name=ALGO_NAME, log_dir="logs")
+    logger = Logger(algo_name=ALGO_NAME, log_dir=output_path)
     sys.stdout = logger
     
     try:
-        results, violations, infos, df = build_and_run(trade_log=TRADE_LOG, chain_file=OPTION_FILE, segment=SEGMENT, lot_size_file=lot_size_file_path)
+        results, violations, infos, df = build_and_run(trade_log=TRADE_LOG, segment=SEGMENT, lot_size_file=LOT_SIZE_FILE, mongo_uri=mongo_uri)
         print_summary(results, violations, infos, skip_infos=False)
         print("\n" + "="*80)
-        generate_violations_from_checks(results, df, algo_name=ALGO_NAME)
+        generate_violations_from_checks(results, df, algo_name=ALGO_NAME, output_dir=output_path)
         print(f"\n[OK] Console output logged to: {logger.log_file}")
     finally:
         logger.close()
@@ -389,5 +379,8 @@ def main(algo_name, trade_log_path, options_file_path, lot_size_file_path="lot_s
         print("[OK] Validation complete. Log saved to: " + logger.log_file)
         
 if __name__ == "__main__":
-    main(algo_name="ALGO", trade_log_path="correct_log.csv", options_file_path="sample_options.csv", lot_size_file_path="lot_size.csv", segment="OPTIONS")
+    import dotenv
+    import os
+    mongo_uri = os.getenv('MONGO_URI')
+    main(algo_name="ALGO", trade_log_path="sample_trade_log_2024_updated.csv", lot_size_file_path="lot_size.csv", segment="OPTIONS", mongo_uri=mongo_uri, output_path=r"C:\Users\aryan\OneDrive\Desktop\WORK__\validator_final\trade_log_validator\millionaire")
     
