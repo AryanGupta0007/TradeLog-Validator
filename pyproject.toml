@@ -16,8 +16,8 @@ dependencies = [
   "polars>=0.18.0",
   "pandas>=2.0",
   "numpy>=1.23",
-  "pyarrow==22.0.0"
-  "pymongo==4.15.5"
+  "pyarrow==22.0.0",
+  "pymongo==4.15.5",
 ]
 
 [project.optional-dependencies]
