@@ -12,10 +12,12 @@ authors = [
   {name = "Aryan Gupta", email = "aryangupta07075@gmail.com"}
 ]
 dependencies = [
-  "DataFeederM @ git+https://github.com/AryanGupta0007/DataFeedModule@1e4906d2d9a3ab3d7f0158d858a87d080440fba1",
+  "DataFeederM @ git+https://github.com/AryanGupta0007/DataFeedModule@0c67da3b5b85cee160c71dff3235691b98753724",
   "polars>=0.18.0",
   "pandas>=2.0",
-  "numpy>=1.23"
+  "numpy>=1.23",
+  "pyarrow==22.0.0"
+  "pymongo==4.15.5"
 ]
 
 [project.optional-dependencies]
