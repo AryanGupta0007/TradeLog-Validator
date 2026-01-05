@@ -258,7 +258,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
         "db": db,
         "collection": collection,
             "query": {
-                "trading_symbol": sym,
+                "sym": sym,
                 "ti": t
                 }
         }
