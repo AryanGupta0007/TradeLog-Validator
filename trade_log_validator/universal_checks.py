@@ -264,7 +264,11 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
         }
         response = requests.post(f"{ORB_URL}/api/data/find_one", headers=headers, json=payload)
         response = response.json()
-        return response['c']
+        try:
+            price = response['c']
+        except:
+            price = None
+        return price
         
     pdf = df.to_pandas()
     result_name = "LTP"
