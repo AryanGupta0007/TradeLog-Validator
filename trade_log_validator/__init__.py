@@ -1,7 +1,7 @@
 from .functional_main import main
 
 class _ValidatorModule:
-    def __call__(self, algo_name="algo_name", trade_log_path=None, lot_size_file_path=None, segment="UNIVERSAL", ORB_URL=None, ACCESS_TOKEN=None, output_path='output/', lot_size_file_path=None):
+    def __call__(self, algo_name="algo_name", trade_log_path=None, lot_size_file_path=None, segment="UNIVERSAL", ORB_URL=None, ACCESS_TOKEN=None, output_path='output/'):
         if trade_log_path == None:
             return "[ERROR] Trade Log path not provided"
         if (ORB_URL == None) or (ACCESS_TOKEN == None):
