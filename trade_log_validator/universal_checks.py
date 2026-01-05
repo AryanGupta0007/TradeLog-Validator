@@ -5,7 +5,59 @@ if prod:
     from .result import CheckResult
 else:
     from result import CheckResult
-import DataFeederM
+import re 
+from datetime import datetime 
+
+class Utils:
+
+    # ---------- REGEX PATTERNS (FIXED) ----------
+
+    INDEX_OPTION_PATTERN  = re.compile(r"^(NIFTY|BANKNIFTY|FINNIFTY|MIDCPNIFTY|SENSEX|BANKEX)")
+    
+    INDEX_FUTURE_PATTERN  = re.compile(r"^(NIFTY|BANKNIFTY|FINNIFTY)(\d{2}[A-Z]{3}FUT|-I)")
+    
+    INDEX_SPOT_PATTERN    = re.compile(
+        r"^(NIFTY 50|NIFTY BANK|NIFTY FIN SERVICE|NIFTY AUTO|NIFTY REALTY|"
+        r"NIFTY PHARMA|NIFTY OIL AND GAS|NIFTY MEDIA|NIFTY IT|NIFTY FMCG|SENSEX)"
+    )
+    
+    # OPTION ex: NIFTY25FEB2119500CE
+    OPTION_PATTERN        = re.compile(
+        r"^([A-Z0-9.&_\-]+)"          # symbol
+        r"(\d{1,2}[A-Z]{3}\d{2})"     # expiry (fixed: \"d{2})
+        r"(\d{1,7})"                  # strike
+        r"(CE|PE)$"                   # option type
+    )
+
+    FUTURE_PATTERN        = re.compile(
+        r"(\d{2}[A-Z]{3}FUT|-(I|II|III))$"
+    )
+
+    @classmethod
+    def get_db_name(cls, sym):
+
+        if cls.OPTION_PATTERN.search(sym):
+            if cls.INDEX_OPTION_PATTERN.search(sym):
+                return "index_options_db"   
+            else:
+                return "stock_options_db"   
+
+        elif cls.FUTURE_PATTERN.search(sym):
+            if cls.INDEX_FUTURE_PATTERN.search(sym):
+                return "index_futures_db"   
+            else:
+                return "stock_futures_db"   
+
+        else:
+            if cls.INDEX_SPOT_PATTERN.search(sym):
+                return "index_db"    
+            else:
+                return "stock_db"    
+
+    @classmethod
+    def get_collection_name(cls, ti, fmt="%Y"):
+        return datetime.fromtimestamp(ti).strftime(fmt)
+    
 
 def no_nulls_check(df: pl.DataFrame) -> CheckResult:
     issues = {}
@@ -193,13 +245,28 @@ def pnl_check(df: pl.DataFrame) -> CheckResult:
     return CheckResult("Pnl Validation", "UNIVERSAL", "PASS", "PnL validation passed")
 
 
-def entry_exit_price_chain_check(df: pl.DataFrame, mongo_client) -> CheckResult:
+def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> CheckResult:
 
-    def _get_price(t, sym, mongo_client):
-        output = DataFeederM(mongo_client=mongo_client,
-            syms=[sym],
-            epochs=[t])
-        return output[sym][0]['c']
+    def _get_price(t, sym, ORB_URL, ACCESS_TOKEN):
+        import requests
+        db = Utils.get_db_name(sym=sym)
+        collection = Utils.get_collection_name(ti=t)
+        headers = {
+            'Authorization': f'Bearer {ACCESS_TOKEN}'
+        }
+        payload = {
+        "db": db,
+        "collection": collection,
+            "query": {
+                "trading_symbol": sym,
+                "ti": t
+                }
+        }
+        response = requests.post(f"{ORB_URL}/api/data/find_one", headers=headers, json=payload)
+        print(response.json())
+        import sys 
+        sys.exit()
+        
     pdf = df.to_pandas()
     result_name = "LTP"
     issues = {}
@@ -230,8 +297,8 @@ def entry_exit_price_chain_check(df: pl.DataFrame, mongo_client) -> CheckResult:
         
             
             
-        entry = _get_price(t=entry_time, sym=sym, mongo_client=mongo_client)
-        exitp = _get_price(t=exit_time, sym=sym, mongo_client=mongo_client)
+        entry = _get_price(t=entry_time, sym=sym, ORB_URL=ORB_URL, ACCESS_TOKEN=ACCESS_TOKEN)
+        exitp = _get_price(t=exit_time, sym=sym, ORB_URL=ORB_URL, ACCESS_TOKEN=ACCESS_TOKEN)
         entry_price = float(row['EntryPrice'])
         exit_price = float(row['ExitPrice'])
         if entry is None or (float(entry) != entry_price) or (exitp is None or float(exitp) != exit_price):
