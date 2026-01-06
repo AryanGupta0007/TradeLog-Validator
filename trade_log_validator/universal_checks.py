@@ -311,9 +311,9 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
         exitp = res_df.loc[(exit_time, sym)]["c"]
         entry_price = float(row['EntryPrice'])
         exit_price = float(row['ExitPrice'])
-        print(entry, exitp)
-        import sys 
-        sys.exit()
+        # print(entry, exitp)
+        # import sys 
+        # sys.exit()
         
         if entry is None or (float(entry) != entry_price) or (exitp is None or float(exitp) != exit_price):
             # print("h", sym)
