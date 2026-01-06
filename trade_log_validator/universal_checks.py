@@ -246,7 +246,17 @@ def pnl_check(df: pl.DataFrame) -> CheckResult:
 
 
 def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> CheckResult:
-
+    def generate_queries(df):
+        queries = {}    
+        for row in df.iterrows():
+            for col in ['KeyEpoch', 'ExitEpoch']:
+                db = Utils.get_db_name(sym=row['Symbol'])
+                ti = int((row[col] / 1e6) - 60)
+                collection = Utils.get_collection_name(ti=ti)
+                queries.setdefault(db, {}).setdefault(collection, [])
+                queries[db][collection].append({"sym": row["Symbol"], "ti": ti})
+        return queries
+    
     def _get_price(queries, ORB_URL, ACCESS_TOKEN):
         import requests
         headers = {
@@ -259,13 +269,11 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
                 "collection": k,
                     "query": {
                         "$or": queries[key][k]
-                }
-                    }
+                }}
                 response = requests.post(f"{ORB_URL}/api/data/find", headers=headers, json=payload)
                 response = response.json()
-                print(response)
-                import sys 
-                sys.exit()
+                df = pd.DataFrame(response)
+                return df.set_index(['ti', 'sym'])
         
             # if response["status"] == 200:
         # return price
@@ -274,7 +282,11 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
     result_name = "LTP"
     issues = {}
     issues[result_name] = [('idx', 'Key', 'ExitTime', 'Symbol', 'EntryPrice', 'ExitPrice', 'Quantity', 'PositionStatus', 'Pnl', 'ExitType', 'KeyEpoch', 'ExitEpoch')]
-    queries = {}
+    queries = generate_queries(df=pdf)
+    res_df = _get_price(queries=queries, ORB_URL=ORB_URL, ACCESS_TOKEN=ACCESS_TOKEN)
+    print(res_df)
+    import sys 
+    sys.exit()
     for idx, row in pdf.iterrows():
         # Handle NaN values in KeyEpoch and ExitEpoch
         try:
@@ -292,13 +304,19 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
             # If we can't convert epoch times, mark as issue and skip
             issues[result_name].append(row)
             continue
-        for col in ['KeyEpoch', 'ExitEpoch']:
-            db = Utils.get_db_name(sym=row['Symbol'])
-            ti = int((row[col] / 1e6) - 60)
-            collection = Utils.get_collection_name(ti=ti)
-            queries.setdefault(db, {}).setdefault(collection, [])
-            queries[db][collection].append({"sym": row["Symbol"], "ti": ti})
-    _get_price(queries, ORB_URL, ACCESS_TOKEN)
+        sym = row["Symbol"]
+        entry = res_df.loc[(entry_time, sym)]
+        exitp = res_df.loc[(exit_time, sym)]
+        entry_price = float(row['EntryPrice'])
+        exit_price = float(row['ExitPrice'])
+        if entry is None or (float(entry) != entry_price) or (exitp is None or float(exitp) != exit_price):
+            # print("h", sym)
+            
+            # print(entry, exitp, entry_price, exit_price)
+            # print(row['Key'], entry_time, int((key_epoch / 1e6)))
+            # print(row['ExitTime'], exit_time, int((exit_epoch / 1e6)))
+            issues[result_name].append(row)
+    
     # print(queries)
         # print(entry_time, row['Symbol'], exit_time)
     # import sys    
