@@ -305,7 +305,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
             exit_time = int((exit_epoch / 1e6) - 60)
         except (ValueError, TypeError) as e:
             # If we can't convert epoch times, mark as issue and skip
-            issues[result_name].append(row)
+            issues["LTP"].append(row)
             continue
         sym = row["Symbol"]
         try:
