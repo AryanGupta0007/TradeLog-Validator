@@ -300,7 +300,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
     for res in result_name:
         issues[res] = [('idx', 'Key', 'ExitTime', 'Symbol', 'EntryPrice', 'ExitPrice', 'Quantity', 'PositionStatus', 'Pnl', 'ExitType', 'KeyEpoch', 'ExitEpoch')]
     queries = generate_queries(df=pdf)
-    print(queries)
+    # print(queries)
     res_df = _get_price(queries=queries, ORB_URL=ORB_URL, ACCESS_TOKEN=ACCESS_TOKEN)
     res_df.to_csv('RES.csv')
     for idx, row in pdf.iterrows():
