@@ -264,16 +264,16 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
         }
         response = requests.post(f"{ORB_URL}/api/data/find_one", headers=headers, json=payload)
         response = response.json()
-        if response["status"] == 200:
-            try:
-                price = response['c']
-            except:
-                price = None
-        else:
-            print(response)
-            print("ERROR: UPDATE YOUR ORB ACCESS TOKEN")
-            import sys 
-            sys.exit()
+        # if response["status"] == 200:
+        try:
+            price = response['c']
+        except:
+            price = None
+        # else:
+        #     print(response)
+        #     print("ERROR: UPDATE YOUR ORB ACCESS TOKEN")
+        #     import sys 
+        #     sys.exit()
         return price
         
     pdf = df.to_pandas()
