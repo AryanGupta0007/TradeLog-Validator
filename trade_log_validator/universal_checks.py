@@ -278,12 +278,10 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
                         "$or": queries[key][k]
                 }}
                 response = requests.post(f"{ORB_URL}/api/data/find", headers=headers, json=payload)
-                data = response.json()
-                
-                if not data:  # empty response
+                try:
+                    data = response.json()
+                except:
                     print(response)
-                    # print(data)
-                    continue
                 
                 all_rows.extend(data)
                 
