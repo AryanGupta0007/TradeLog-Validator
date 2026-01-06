@@ -289,9 +289,6 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
     issues[result_name] = [('idx', 'Key', 'ExitTime', 'Symbol', 'EntryPrice', 'ExitPrice', 'Quantity', 'PositionStatus', 'Pnl', 'ExitType', 'KeyEpoch', 'ExitEpoch')]
     queries = generate_queries(df=pdf)
     res_df = _get_price(queries=queries, ORB_URL=ORB_URL, ACCESS_TOKEN=ACCESS_TOKEN)
-    print(res_df)
-    import sys 
-    sys.exit()
     for idx, row in pdf.iterrows():
         # Handle NaN values in KeyEpoch and ExitEpoch
         try:
