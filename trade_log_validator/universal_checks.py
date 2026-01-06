@@ -298,21 +298,21 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
             
             # Skip rows with NaN values
             if pd.isna(key_epoch) or pd.isna(exit_epoch):
-                issues[result_name].append(row)
+                issues[result_name[0]].append(row)
                 continue
             
             entry_time = int((key_epoch / 1e6) - 60)
             exit_time = int((exit_epoch / 1e6) - 60)
         except (ValueError, TypeError) as e:
             # If we can't convert epoch times, mark as issue and skip
-            issues["LTP"].append(row)
+            issues[result_name[0]].append(row)
             continue
         sym = row["Symbol"]
         try:
             entry = res_df.loc[(entry_time, sym)]["c"]
             exitp = res_df.loc[(exit_time, sym)]["c"]
         except:
-            issues["NOT_FOUND"].append(row)
+            issues[result_name[1]].append(row)
         entry_price = float(row['EntryPrice'])
         exit_price = float(row['ExitPrice'])
         # print(entry, exitp)
@@ -325,7 +325,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
             # print(entry, exitp, entry_price, exit_price)
             # print(row['Key'], entry_time, int((key_epoch / 1e6)))
             # print(row['ExitTime'], exit_time, int((exit_epoch / 1e6)))
-            issues["LTP"].append(row)
+            issues[result_name[0]].append(row)
     
     # print(queries)
         # print(entry_time, row['Symbol'], exit_time)
@@ -339,7 +339,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
         
     has_issues = any(len(v) > 1 for v in issues.values())
     if has_issues:
-        severity = {result_name: "ERROR"}
+        severity = {result_name[0]: "ERROR", result_name[1]: "ERROR"}
         return CheckResult("LTP VALIDATION", "UNIVERSAL", "FAIL", "Chain entry/exit mismatches detected", issues, severity)
 
     return CheckResult("LTP VALIDATION", "UNIVERSAL", "PASS", "Entry/Exit chain prices consistent")
