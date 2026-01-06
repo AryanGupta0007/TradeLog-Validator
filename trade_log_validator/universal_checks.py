@@ -271,7 +271,9 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
                 price = None
         else:
             print(response)
-            price = None
+            print("ERROR: UPDATE YOUR ORB ACCESS TOKEN")
+            import sys 
+            sys.exit()
         return price
         
     pdf = df.to_pandas()
