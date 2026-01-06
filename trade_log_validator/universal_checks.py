@@ -298,6 +298,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
             collection = Utils.get_collection_name(ti=ti)
             queries.setdefault(db, {}).setdefault(collection, [])
             queries[db][collection].append({"sym": row["Symbol"], "ti": ti})
+    _get_price(queries, ORB_URL, ACCESS_TOKEN)
     # print(queries)
         # print(entry_time, row['Symbol'], exit_time)
     # import sys    
