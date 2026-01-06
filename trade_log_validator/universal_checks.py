@@ -249,8 +249,6 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
 
     def _get_price(t, sym, ORB_URL, ACCESS_TOKEN):
         import requests
-        db = Utils.get_db_name(sym=sym)
-        collection = Utils.get_collection_name(ti=t)
         headers = {
             'Authorization': f'Bearer {ACCESS_TOKEN}'
         }
@@ -280,7 +278,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
     result_name = "LTP"
     issues = {}
     issues[result_name] = [('idx', 'Key', 'ExitTime', 'Symbol', 'EntryPrice', 'ExitPrice', 'Quantity', 'PositionStatus', 'Pnl', 'ExitType', 'KeyEpoch', 'ExitEpoch')]
-
+    queries = {}
     for idx, row in pdf.iterrows():
         # Handle NaN values in KeyEpoch and ExitEpoch
         try:
@@ -298,25 +296,21 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
             # If we can't convert epoch times, mark as issue and skip
             issues[result_name].append(row)
             continue
-        
+        for col in ['KeyEpoch', 'ExitEpoch']:
+            db = Utils.get_db_name(sym=row['Symbol'])
+            ti = int((row[col] / 1e6) - 60)
+            collection = Utils.get_collection_name(ti=ti)
+            if not queries[db][collection]:
+                queries[db][collection] = []
+            queries[db][collection].append({"sym": row["Symbol"], "ti": ti})
+    print(queries)
         # print(entry_time, row['Symbol'], exit_time)
-        # import sys    
-        # sys.exit()
-        sym = row["Symbol"]
-        
+    import sys    
+    sys.exit()
+    
+    
             
             
-        entry = _get_price(t=entry_time, sym=sym, ORB_URL=ORB_URL, ACCESS_TOKEN=ACCESS_TOKEN)
-        exitp = _get_price(t=exit_time, sym=sym, ORB_URL=ORB_URL, ACCESS_TOKEN=ACCESS_TOKEN)
-        entry_price = float(row['EntryPrice'])
-        exit_price = float(row['ExitPrice'])
-        if entry is None or (float(entry) != entry_price) or (exitp is None or float(exitp) != exit_price):
-            # print("h", sym)
-            
-            # print(entry, exitp, entry_price, exit_price)
-            # print(row['Key'], entry_time, int((key_epoch / 1e6)))
-            # print(row['ExitTime'], exit_time, int((exit_epoch / 1e6)))
-            issues[result_name].append(row)
         
         
     has_issues = any(len(v) > 1 for v in issues.values())
