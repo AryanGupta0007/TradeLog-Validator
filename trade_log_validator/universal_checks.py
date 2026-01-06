@@ -307,8 +307,11 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
             issues[result_name].append(row)
             continue
         sym = row["Symbol"]
-        entry = res_df.loc[(entry_time, sym)]["c"]
-        exitp = res_df.loc[(exit_time, sym)]["c"]
+        try:
+            entry = res_df.loc[(entry_time, sym)]["c"]
+            exitp = res_df.loc[(exit_time, sym)]["c"]
+        except:
+            issues["NOT FOUND"].append(row)
         entry_price = float(row['EntryPrice'])
         exit_price = float(row['ExitPrice'])
         # print(entry, exitp)
