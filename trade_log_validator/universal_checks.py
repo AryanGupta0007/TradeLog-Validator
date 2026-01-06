@@ -248,7 +248,7 @@ def pnl_check(df: pl.DataFrame) -> CheckResult:
 def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> CheckResult:
     def generate_queries(df):
         queries = {}    
-        for row in df.iterrows():
+        for idx, row in df.iterrows():
             for col in ['KeyEpoch', 'ExitEpoch']:
                 db = Utils.get_db_name(sym=row['Symbol'])
                 ti = int((row[col] / 1e6) - 60)
