@@ -284,7 +284,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
         # return price
         
     pdf = df.to_pandas()
-    result_name = ["LTP", "NOT FOUND"]
+    result_name = ["LTP", "NOT_FOUND"]
     issues = {}
     for res in result_name:
         issues[res] = [('idx', 'Key', 'ExitTime', 'Symbol', 'EntryPrice', 'ExitPrice', 'Quantity', 'PositionStatus', 'Pnl', 'ExitType', 'KeyEpoch', 'ExitEpoch')]
@@ -312,7 +312,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
             entry = res_df.loc[(entry_time, sym)]["c"]
             exitp = res_df.loc[(exit_time, sym)]["c"]
         except:
-            issues["NOT FOUND"].append(row)
+            issues["NOT_FOUND"].append(row)
         entry_price = float(row['EntryPrice'])
         exit_price = float(row['ExitPrice'])
         # print(entry, exitp)
@@ -325,7 +325,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
             # print(entry, exitp, entry_price, exit_price)
             # print(row['Key'], entry_time, int((key_epoch / 1e6)))
             # print(row['ExitTime'], exit_time, int((exit_epoch / 1e6)))
-            issues[result_name].append(row)
+            issues["LTP"].append(row)
     
     # print(queries)
         # print(entry_time, row['Symbol'], exit_time)
