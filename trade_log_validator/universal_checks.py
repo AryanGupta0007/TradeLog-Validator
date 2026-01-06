@@ -264,9 +264,13 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
         }
         response = requests.post(f"{ORB_URL}/api/data/find_one", headers=headers, json=payload)
         response = response.json()
-        try:
-            price = response['c']
-        except:
+        if response["status"] == 200:
+            try:
+                price = response['c']
+            except:
+                price = None
+        else:
+            print(response)
             price = None
         return price
         
