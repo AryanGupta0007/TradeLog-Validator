@@ -251,10 +251,13 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
         for idx, row in df.iterrows():
             for col in ['KeyEpoch', 'ExitEpoch']:
                 db = Utils.get_db_name(sym=row['Symbol'])
-                ti = int((row[col] / 1e6) - 60)
-                collection = Utils.get_collection_name(ti=ti)
-                queries.setdefault(db, {}).setdefault(collection, [])
-                queries[db][collection].append({"sym": row["Symbol"], "ti": ti})
+                if type(row[col]) == int:
+                    ti = int((row[col] / 1e6) - 60)
+                    collection = Utils.get_collection_name(ti=ti)
+                    queries.setdefault(db, {}).setdefault(collection, [])
+                    queries[db][collection].append({"sym": row["Symbol"], "ti": ti})
+                else:
+                    print(row[col])
         return queries
     
     def _get_price(queries, ORB_URL, ACCESS_TOKEN):
