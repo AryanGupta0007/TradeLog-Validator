@@ -263,10 +263,12 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
         return queries
     
     def _get_price(queries, ORB_URL, ACCESS_TOKEN):
+        
         import requests
         headers = {
             'Authorization': f'Bearer {ACCESS_TOKEN}'
         }
+        all_rows = []
         for key in queries.keys():
             for k in queries[key].keys():
                 payload = {
@@ -277,11 +279,20 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
                 }}
                 response = requests.post(f"{ORB_URL}/api/data/find", headers=headers, json=payload)
                 response = response.json()
-                df = pd.DataFrame(response)
-                return df.set_index(['ti', 'sym'])
-        
-            # if response["status"] == 200:
-        # return price
+                if not response:  # empty response
+                    continue
+                all_rows.extend(response)
+                
+        if not all_rows:
+            return pd.DataFrame().set_index(["ti", "sym"])
+
+        df = pd.DataFrame(all_rows)
+
+        if "ti" not in df.columns or "sym" not in df.columns:
+            raise ValueError("Response missing required columns: ti, sym")
+
+        df = df.set_index(["ti", "sym"]).sort_index()
+        return df
         
     pdf = df.to_pandas()
     result_name = ["LTP", "NOT_FOUND"]
