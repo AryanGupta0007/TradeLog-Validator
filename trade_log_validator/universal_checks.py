@@ -281,7 +281,8 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
                 try:
                     data = response.json()
                 except:
-                    print(response)
+                    raise ValueError(f"INVALID DATA: {data}")
+                    
                 
                 all_rows.extend(data)
                 
