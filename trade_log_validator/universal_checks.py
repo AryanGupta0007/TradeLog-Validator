@@ -300,6 +300,8 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
             db = Utils.get_db_name(sym=row['Symbol'])
             ti = int((row[col] / 1e6) - 60)
             collection = Utils.get_collection_name(ti=ti)
+            if queries[db]:
+                queries[db] = {}
             if not queries[db][collection]:
                 queries[db][collection] = []
             queries[db][collection].append({"sym": row["Symbol"], "ti": ti})
