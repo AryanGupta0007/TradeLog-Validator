@@ -247,32 +247,28 @@ def pnl_check(df: pl.DataFrame) -> CheckResult:
 
 def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> CheckResult:
 
-    def _get_price(t, sym, ORB_URL, ACCESS_TOKEN):
+    def _get_price(queries, ORB_URL, ACCESS_TOKEN):
         import requests
         headers = {
             'Authorization': f'Bearer {ACCESS_TOKEN}'
         }
-        payload = {
-        "db": db,
-        "collection": collection,
-            "query": {
-                "sym": sym,
-                "ti": t
+        for key in queries.keys():
+            for k in queries[key].keys():
+                payload = {
+                "db": key,
+                "collection": k,
+                    "query": {
+                        "$or": queries[key][k]
                 }
-        }
-        response = requests.post(f"{ORB_URL}/api/data/find_one", headers=headers, json=payload)
-        response = response.json()
-        # if response["status"] == 200:
-        try:
-            price = response['c']
-        except:
-            price = None
-        # else:
-        #     print(response)
-        #     print("ERROR: UPDATE YOUR ORB ACCESS TOKEN")
-        #     import sys 
-        #     sys.exit()
-        return price
+                    }
+                response = requests.post(f"{ORB_URL}/api/data/find", headers=headers, json=payload)
+                response = response.json()
+                print(response)
+                import sys 
+                sys.exit()
+        
+            # if response["status"] == 200:
+        # return price
         
     pdf = df.to_pandas()
     result_name = "LTP"
@@ -302,10 +298,10 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
             collection = Utils.get_collection_name(ti=ti)
             queries.setdefault(db, {}).setdefault(collection, [])
             queries[db][collection].append({"sym": row["Symbol"], "ti": ti})
-    print(queries)
+    # print(queries)
         # print(entry_time, row['Symbol'], exit_time)
-    import sys    
-    sys.exit()
+    # import sys    
+    # sys.exit()
     
     
             
