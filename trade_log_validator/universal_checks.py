@@ -293,7 +293,9 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
 
         if "ti" not in df.columns or "sym" not in df.columns:
             print("hi")
-            print(df)
+            # print(df)
+            print(all_rows)
+            print(data)
             raise ValueError("Response missing required columns: ti, sym")
             
         df = df.set_index(["ti", "sym"]).sort_index()
