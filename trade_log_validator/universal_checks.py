@@ -260,7 +260,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
                         queries.setdefault(db, {}).setdefault(collection, [])
                         queries[db][collection].append({"sym": row["Symbol"], "ti": ti})
                     else:
-                        print(row[col])
+                        continue
                 except:
                     continue
         return queries
