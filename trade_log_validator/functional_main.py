@@ -51,7 +51,7 @@ class Logger:
         os.makedirs(log_dir, exist_ok=True)
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.log_file = os.path.join(log_dir, f"validation_{algo_name}_{timestamp}.log")
+        self.log_file = os.path.join(log_dir, f"validation.log")
         self.log = open(self.log_file, 'a', encoding='utf-8')
         
         # Write separator for new run
@@ -318,7 +318,7 @@ def generate_violations_from_checks(results, df_original: pl.DataFrame, algo_nam
             
             # Write CSV to timestamped file in logs directory
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = os.path.join(output_dir, f"violations_report_{algo_name}_{timestamp}.csv")
+            output_file = os.path.join(output_dir, f"violations.csv")
             # output_file = os.path.join(f"violations_report.csv")
             report_df = report_df.drop(["KeyEpoch", "ExitEpoch"])
             report_df = report_df.unique().sort("idx")
@@ -370,7 +370,6 @@ def main(algo_name, trade_log_path, lot_size_file_path="lot_size.csv", segment="
         print_summary(results, violations, infos, skip_infos=False)
         print("\n" + "="*80)
         generate_violations_from_checks(results, df, algo_name=ALGO_NAME, output_dir=output_path)
-        print(f"\n[OK] Console output logged to: {logger.log_file}")
     finally:
         logger.close()
         sys.stdout = sys.__stdout__
