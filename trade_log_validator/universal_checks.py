@@ -245,7 +245,7 @@ def pnl_check(df: pl.DataFrame) -> CheckResult:
     return CheckResult("Pnl Validation", "UNIVERSAL", "PASS", "PnL validation passed")
 
 
-def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> CheckResult:
+def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ORB_USERNAME, ORB_PASSWORD) -> CheckResult:
     def generate_queries(df):
         queries = {}    
         for idx, row in df.iterrows():
@@ -265,12 +265,19 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
                     continue
         return queries
     
-    def _get_price(queries, ORB_URL, ACCESS_TOKEN):
+    def _get_price(queries, ORB_URL, ORB_USERNAME, ORB_PASSWORD):
         
-        import requests
-        headers = {
-            'Authorization': f'Bearer {ACCESS_TOKEN}'
+        import requests # type: ignore
+        auth_data = {
+            "username": ORB_USERNAME,
+            "password": ORB_PASSWORD
         }
+        response = requests.post(f"{ORB_URL}/api/auth/token", data=auth_data)
+        token = response.json().get("access_token")
+        headers = {
+            'Authorization': f'Bearer {token}'
+        }
+
         all_rows = []
         for key in queries.keys():
             for k in queries[key].keys():
@@ -311,7 +318,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
         issues[res] = [('idx', 'Key', 'ExitTime', 'Symbol', 'EntryPrice', 'ExitPrice', 'Quantity', 'PositionStatus', 'Pnl', 'ExitType', 'KeyEpoch', 'ExitEpoch')]
     queries = generate_queries(df=pdf)
     # print(queries)
-    res_df = _get_price(queries=queries, ORB_URL=ORB_URL, ACCESS_TOKEN=ACCESS_TOKEN)
+    res_df = _get_price(queries=queries, ORB_URL=ORB_URL, ORB_USERNAME=ORB_USERNAME, ORB_PASSWORD=ORB_PASSWORD)
     # res_df.to_csv('RES.csv')
     for idx, row in pdf.iterrows():
         # Handle NaN values in KeyEpoch and ExitEpoch

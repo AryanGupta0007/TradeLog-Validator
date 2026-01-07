@@ -80,7 +80,7 @@ def load_df(path: str) -> pl.DataFrame:
     return pl.read_csv(path)
 
 
-def build_and_run(trade_log: str, segment: str, lot_size_file, ORB_URL, ACCESS_TOKEN) -> Tuple[list, Dict[str, Any], Dict[str, Any], pl.DataFrame]:
+def build_and_run(trade_log: str, segment: str, lot_size_file, ORB_URL, ORB_USERNAME, ORB_PASSWORD) -> Tuple[list, Dict[str, Any], Dict[str, Any], pl.DataFrame]:
     df = load_df(trade_log)
     lot_size_df = load_df(lot_size_file)
     # print(lot_size_df)
@@ -155,7 +155,7 @@ def build_and_run(trade_log: str, segment: str, lot_size_file, ORB_URL, ACCESS_T
     results.append(pnl_check(df))
     results.append(no_negatives_check(df))
     results.append(duplicate_rows_check(df))
-    results.append(entry_exit_price_chain_check(df, ORB_URL=ORB_URL, ACCESS_TOKEN=ACCESS_TOKEN))
+    results.append(entry_exit_price_chain_check(df, ORB_URL=ORB_URL, ORB_USERNAME=ORB_USERNAME, ORB_PASSWORD=ORB_PASSWORD))
     if segment == "OPTIONS":
         results.append(options_expiry_check(df))
         results.append(options_quantity_check(df, lot_size_df))
@@ -357,7 +357,7 @@ def generate_violations_from_checks(results, df_original: pl.DataFrame, algo_nam
         traceback.print_exc()
         return None
 
-def main(algo_name, trade_log_path, lot_size_file_path="lot_size.csv", segment="UNIVERSAL", ORB_URL=None, ACCESS_TOKEN=None, output_path="logs"):
+def main(algo_name, trade_log_path, lot_size_file_path="lot_size.csv", segment="UNIVERSAL", ORB_URL=None, ORB_USERNAME=None, ORB_PASSWORD=None, output_path="logs"):
     ALGO_NAME = algo_name
     TRADE_LOG = trade_log_path
     SEGMENT = segment.upper()
@@ -366,7 +366,7 @@ def main(algo_name, trade_log_path, lot_size_file_path="lot_size.csv", segment="
     sys.stdout = logger
     
     try:
-        results, violations, infos, df = build_and_run(trade_log=TRADE_LOG, segment=SEGMENT, lot_size_file=LOT_SIZE_FILE, ORB_URL=ORB_URL, ACCESS_TOKEN=ACCESS_TOKEN)
+        results, violations, infos, df = build_and_run(trade_log=TRADE_LOG, segment=SEGMENT, lot_size_file=LOT_SIZE_FILE, ORB_USERNAME=ORB_USERNAME, ORB_PASSWORD=ORB_PASSWORD, ORB_URL=ORB_URL)
         print_summary(results, violations, infos, skip_infos=False)
         print("\n" + "="*80)
         generate_violations_from_checks(results, df, algo_name=ALGO_NAME, output_dir=output_path)
