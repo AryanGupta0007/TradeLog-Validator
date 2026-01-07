@@ -250,16 +250,19 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
         queries = {}    
         for idx, row in df.iterrows():
             for col in ['KeyEpoch', 'ExitEpoch']:
-                db = Utils.get_db_name(sym=row['Symbol'])
-                import math
-                val = row[col]
-                if not math.isnan(val): 
-                    ti = int((val / 1e6) - 60)
-                    collection = Utils.get_collection_name(ti=ti)
-                    queries.setdefault(db, {}).setdefault(collection, [])
-                    queries[db][collection].append({"sym": row["Symbol"], "ti": ti})
-                else:
-                    print(row[col])
+                try:
+                    db = Utils.get_db_name(sym=row['Symbol'])
+                    import math
+                    val = row[col]
+                    if not math.isnan(val): 
+                        ti = int((val / 1e6) - 60)
+                        collection = Utils.get_collection_name(ti=ti)
+                        queries.setdefault(db, {}).setdefault(collection, [])
+                        queries[db][collection].append({"sym": row["Symbol"], "ti": ti})
+                    else:
+                        print(row[col])
+                except:
+                    continue
         return queries
     
     def _get_price(queries, ORB_URL, ACCESS_TOKEN):
@@ -309,7 +312,7 @@ def entry_exit_price_chain_check(df: pl.DataFrame, ORB_URL, ACCESS_TOKEN) -> Che
     queries = generate_queries(df=pdf)
     # print(queries)
     res_df = _get_price(queries=queries, ORB_URL=ORB_URL, ACCESS_TOKEN=ACCESS_TOKEN)
-    res_df.to_csv('RES.csv')
+    # res_df.to_csv('RES.csv')
     for idx, row in pdf.iterrows():
         # Handle NaN values in KeyEpoch and ExitEpoch
         try:
